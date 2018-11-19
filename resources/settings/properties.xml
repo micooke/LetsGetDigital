@@ -1,0 +1,14 @@
+<properties>
+	<property id="BackgroundColour" type="number">0x000000</property>
+    <property id="HourColour" type="number">0x00AAFF</property>
+    <property id="MinuteColour" type="number">0xFFFFFF</property>
+    <property id="DateColour" type="number">0xAAAAAA</property>
+    <property id="InactiveColour" type="number">0x000000</property>
+    <property id="ActiveColour" type="number">0x00AAFF</property>
+    <property id="OverActiveColour" type="number">0xFFFFFF</property>
+    <property id="CheckerPlateZeroHours" type="boolean">true</property>
+    <property id="CheckerPlateMediumDate" type="boolean">false</property>
+    <property id="WatchStyle" type="number">0x000004</property>
+    <property id="TimeCheckerplateStyle" type="number">0x000001</property>
+    <property id="DateCheckerplateStyle" type="number">0x000000</property>
+</properties>

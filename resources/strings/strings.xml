@@ -1,0 +1,45 @@
+<strings>
+    <string id="AppName">Lets Get Digital</string>
+
+	<string id="BackgroundColourTitle">Background Colour</string>
+    <string id="HourColourTitle">Hour Colour</string>
+    <string id="MinuteColourTitle">Minute Colour</string>
+    <string id="DateColourTitle">Date Colour</string>
+    <string id="InactiveColourTitle">Inactive Colour</string>
+    <string id="ActiveColourTitle">Active Colour</string>
+    <string id="OverActiveColourTitle">Over-Active Colour</string>
+	<string id="WatchStyleTitle">Watch style</string>
+	<string id="TimeCheckerplateStyleTitle">Prepended zero hours - checkerplate font</string>
+	<string id="DateCheckerplateStyleTitle">   Side-by-side date - checkerplate font</string>
+	
+    <string id="Style0">Style0</string>
+    <string id="Style1">Style1</string>
+    <string id="Style2">Style2</string>
+    <string id="Style3">Style3</string>
+    <string id="Style4">Style4</string>
+    <string id="Style5">Style5</string>
+    <string id="Style6">Style6</string>
+
+	<string id="NoChecker">No checkerplating</string>
+	<string id="Checker0">Small checker</string>
+	<string id="Checker1">Medium checker</string>
+    <string id="Checker2">Small stripes</string>
+    <string id="Checker3">Medium stripes</string>
+    <string id="Checker4">Small boxes</string>
+
+    <string id="White">White</string>
+    <string id="LightGray">Light Gray</string>
+    <string id="DarkGray">Dark Gray</string>
+    <string id="Black">Black</string>
+    <string id="Red">Red</string>
+    <string id="DarkRed">Dark Red</string>
+    <string id="Orange">Orange</string>
+    <string id="Yellow">Yellow</string>
+    <string id="Green">Green</string>
+    <string id="DarkGreen">Dark Green</string>
+    <string id="Blue">Blue</string>
+    <string id="DarkBlue">Dark Blue</string>
+    <string id="Purple">Purple</string>
+    <string id="Pink">Pink</string>
+    <string id="LightYellow">Light Yellow</string>
+</strings>

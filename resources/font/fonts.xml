@@ -1,0 +1,21 @@
+<!-- 
+unique Medium/Date font characters found using python
+date_chars = 'janfebmaraprmayjunjulaugsepoctnovdecthstndrdthmontuewedthufrisatsun' 
+unique_date_chars = ''.join(sorted(set(date_chars))).upper()
+# unique_date_chars = 'ABCDEFGHIJLMNOPRSTUVWY'
+-->
+<fonts>
+	<font id="DigitaltSmall" filename="DigitaltSmall.fnt" antialias="true" filter="ABCDEFGHIJLMNOPRSTUVWY 0123456789%"/>
+	<font id="DigitaltMedium" filename="DigitaltMedium.fnt" antialias="true"/>
+	<font id="DigitaltMediumChecker0" filename="DigitaltMediumChecker0.fnt" antialias="true" filter="ABCDEFGHIJLMNOPRSTUVWY 0123456789"/>
+	<font id="DigitaltMediumChecker1" filename="DigitaltMediumChecker1.fnt" antialias="true" filter="ABCDEFGHIJLMNOPRSTUVWY 0123456789"/>
+	<font id="DigitaltMediumChecker2" filename="DigitaltMediumChecker2.fnt" antialias="true" filter="ABCDEFGHIJLMNOPRSTUVWY 0123456789"/>
+	<font id="DigitaltMediumChecker3" filename="DigitaltMediumChecker3.fnt" antialias="true" filter="ABCDEFGHIJLMNOPRSTUVWY 0123456789"/>
+	<font id="DigitaltMediumChecker4" filename="DigitaltMediumChecker4.fnt" antialias="true" filter="ABCDEFGHIJLMNOPRSTUVWY 0123456789"/>
+	<font id="Digitalt" filename="Digitalt.fnt" antialias="true" filter=" 0123456789"/>
+	<font id="DigitaltChecker0" filename="DigitaltChecker0.fnt" antialias="true" filter="0"/>
+	<font id="DigitaltChecker1" filename="DigitaltChecker1.fnt" antialias="true" filter="0"/>
+	<font id="DigitaltChecker2" filename="DigitaltChecker2.fnt" antialias="true" filter="0"/>
+	<font id="DigitaltChecker3" filename="DigitaltChecker3.fnt" antialias="true" filter="0"/>
+	<font id="DigitaltChecker4" filename="DigitaltChecker4.fnt" antialias="true" filter="0"/>
+</fonts>

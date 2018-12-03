@@ -3,9 +3,13 @@ unique Medium/Date font characters found using python
 date_chars = 'janfebmaraprmayjunjulaugsepoctnovdecthstndrdthmontuewedthufrisatsun' 
 unique_date_chars = ''.join(sorted(set(date_chars))).upper()
 # unique_date_chars = 'ABCDEFGHIJLMNOPRSTUVWY'
+# Note : In DigitaltSmallErosion.fnt; # = message icon, $ = heart icon from LigatureSymbols font
+ 
+Heartrate and Message icons from open SIL font : http://kudakurage.com/ligature_symbols/
+Digitalt open SIL font from : http://www.glukfonts.pl/font.php?font=Digitalt
 -->
 <fonts>
-	<font id="DigitaltSmall" filename="DigitaltSmall.fnt" antialias="true" filter="ABCDEFGHIJLMNOPRSTUVWY 0123456789%"/>
+	<font id="DigitaltSmall" filename="DigitaltSmallErosion.fnt" antialias="true" filter="ABCDEFGHIJLMNOPRSTUVWY 0123456789%#$"/>
 	<font id="DigitaltMedium" filename="DigitaltMedium.fnt" antialias="true"/>
 	<font id="DigitaltMediumChecker0" filename="DigitaltMediumChecker0.fnt" antialias="true" filter="ABCDEFGHIJLMNOPRSTUVWY 0123456789"/>
 	<font id="DigitaltMediumChecker1" filename="DigitaltMediumChecker1.fnt" antialias="true" filter="ABCDEFGHIJLMNOPRSTUVWY 0123456789"/>

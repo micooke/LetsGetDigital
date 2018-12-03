@@ -8,41 +8,50 @@ using Toybox.Time as Time;
 using Toybox.Time.Gregorian as Calendar;
 using Toybox.Application as App;
 using Toybox.Math as Math;
-
+/*
+char id=35 x=180    y=15     width=14    height=14    xoffset=0     yoffset=4     xadvance=14    page=0  chnl=15
+char id=36 x=165     y=15     width=15    height=14    xoffset=0     yoffset=4     xadvance=15    page=0  chnl=15
+*/
 class LetsGetDigitalView extends Ui.WatchFace {
 
-	hidden var smallDateFont, smallDateWidth;
-	hidden var dateFont;
-	hidden var timeFont, timeFontWidth;
-	hidden var timeCheckerFont;
+	hidden var smallDateFont, dateFont, timeFont, timeCheckerFont;
+	
 	hidden const ordinalIndicator = ["TH","ST","ND","RD","TH","TH","TH","TH","TH","TH"];
 	hidden const engDay = ["","sun","mon","tue","wed","thu","fri","sat"];
 	hidden const engMonth = ["","jan","feb","mar","apr","may","jun","jul","aug","sep","oct","nov","dec"];
-	hidden const overstepGap = 2, overstepWidth = 3, mediumDateOffset = 5, stepArcWidth = 4;
+	hidden const overstepGap = 2, overstepWidth = 3, mediumDateOffset = 5, halfMediumDateOffset = 3, stepArcWidth = 4;
+			
+	hidden const dateFontHeight = 33*1.25;
+	hidden const timeFontHeight = 59*1.05;
+	//                           [ 0, 1, 2, 3, 4, 5, 6, 7, 8, 9]
+	hidden const timeFontWidth = [51,28,45,42,47,44,48,43,50,48]; // get this from the relevant fnt file (column width)
+	hidden const smallDateFontHeight = 16;//3;
+	// get this from the relevant fnt file (column xadvance)
+	hidden const smallDateWidth = {" "=>6,"%"=>16,"0"=>11,"1"=>6,"2"=>10,"3"=>9,"4"=>10,"5"=>10,"6"=>10,"7"=>9,"8"=>11,"9"=>10,
+					"A"=>11,"B"=>11,"C"=>9,"D"=>11,"E"=>10,"F"=>9,"G"=>11,"H"=>11,"I"=>6,"J"=>9,"K"=>11,"L"=>9,"M"=>14,
+					"N"=>11,"O"=>11,"P"=>11,"Q"=>11,"R"=>11,"S"=>10,"T"=>10,"U"=>11,"V"=>11,"W"=>14,"X"=>11,"Y"=>11,"Z"=>9,
+					"#"=>15,"$"=>16};
 	
 	// settings
 	hidden var is24Hour, fourtwenty = false;
 	hidden var backgroundColour, HourColour, MinuteColour, DateColour, InactiveColour;
 	hidden var ActiveColour, OverActiveColour, WatchStyle;
 	hidden var TimeCheckerplateStyle = -1, DateCheckerplateStyle = -1;
+	
+	// screen and font dimensions
+	hidden var timeVerticalCentre, dateVerticalCentre, smallDateVerticalCentre;
+  	hidden var screenWidth, halfScreenWidth, screenHeight, halfScreenHeight;
 
 	function initialize()
 	{
 		WatchFace.initialize();
 		updateSettings();
 		
+		loadCheckerplateFonts();
+		
 		timeFont = Ui.loadResource(Rez.Fonts.Digitalt);
 		
 		smallDateFont = Ui.loadResource(Rez.Fonts.DigitaltSmall);
-				
-		loadCheckerplateFonts();
-		
-		//              [ 0, 1, 2, 3, 4, 5, 6, 7, 8, 9]
-		timeFontWidth = [51,28,45,42,47,44,48,43,50,48]; // get this from the relevant fnt file (column width)
-		// get this from the relevant fnt file (column xadvance)
-		smallDateWidth = {" "=>5,"%"=>11,"0"=>8,"1"=>5,"2"=>7,"3"=>7,"4"=>7,"5"=>7,"6"=>7,"7"=>7,"8"=>8,"9"=>7,
-					"A"=>8,"B"=>8,"C"=>6,"D"=>8,"E"=>7,"F"=>6,"G"=>8,"H"=>8,"I"=>4,"J"=>7,"K"=>8,"L"=>6,"M"=>10,
-					"N"=>8,"O"=>8,"P"=>8,"Q"=>8,"R"=>8,"S"=>7,"T"=>7,"U"=>8,"V"=>8,"W"=>10,"X"=>8,"Y"=>8,"Z"=>7};
 	}
 	
 	function loadCheckerplateFonts()
@@ -101,7 +110,20 @@ class LetsGetDigitalView extends Ui.WatchFace {
 	}
 
 	function onLayout(dc) {
+		getScreenDimensions(dc);
 		updateSettings();
+	}
+	
+	function getScreenDimensions(dc)
+	{
+		screenWidth = dc.getWidth();
+   		halfScreenWidth = screenWidth/2;
+   		screenHeight = dc.getWidth();
+   		halfScreenHeight = screenHeight/2;
+   		
+   		timeVerticalCentre = halfScreenHeight - 0.5*timeFontHeight;
+		dateVerticalCentre = halfScreenHeight - 0.4*dateFontHeight;
+  		smallDateVerticalCentre = halfScreenHeight - 0.5*smallDateFontHeight;
 	}
 	
 	function updateSettings() {
@@ -129,12 +151,15 @@ class LetsGetDigitalView extends Ui.WatchFace {
 		//var t0 = Sys.getTimer();
 		//updateSettings();
 		loadCheckerplateFonts();
+		
+		// watch settings
+		var deviceSettings = System.getDeviceSettings();
+		var notificationCount = deviceSettings.notificationCount;
+		//notificationCount = 10; // DEBUG
+		
 		//is24Hour = true; // DEBUG
 		// watch statistics
     	var batteryLevel = Sys.getSystemStats().battery;
-    	//batteryLevel = 15; // DEBUG
-		var batteryLevelString = batteryLevel.format("%d") + "%";
-		//var batteryLevelString = (batteryLevel <= 15)?"RECHARGE":batteryLevel.format("%d") + "%"; 
 		
 		// get local time
 		var clockTime = Sys.getClockTime();
@@ -164,7 +189,8 @@ class LetsGetDigitalView extends Ui.WatchFace {
         {
             clockTime.hour -= 12;
         }
-
+		//clockTime.hour = 6; // DEBUG
+		
 		// Call the parent onUpdate function to redraw the layout
 		//View.onUpdate(dc);
 
@@ -200,24 +226,14 @@ class LetsGetDigitalView extends Ui.WatchFace {
 		var stepPercent = (stepCount == 0.0)?0.0:(stepCount.toFloat() / stepGoal);
 		//stepPercent = 2.65; // DEBUG
         		
-		// screen and font dimensions
-		var timeFontHeight = dc.getFontHeight(timeFont);
-		var timeVerticalCentre = dc.getHeight()/2 - 0.5*timeFontHeight;
-		var dateFontHeight = dc.getFontHeight(dateFont)*1.15;
-		var dateVerticalCentre = dc.getHeight()/2 - 0.4*dateFontHeight;
-		var smallDateFontHeight = dc.getFontHeight(smallDateFont);
-      	var smallDateVerticalCentre = dc.getHeight()/2 - 0.5*smallDateFontHeight;
                 
         // setup the time
-		var clockHour = clockTime.hour.format("%02d");
-		var hourLabel = clockHour.toString();
+		var hourLabel = clockTime.hour.format("%02d");
 		var minuteLabel = clockTime.min.format("%02d");
 		
 		// meta parameters
 		var overStepCount = stepPercent.toNumber();
 	   	var fillPercent = stepPercent - overStepCount.toFloat();
-	   	var halfWidth = dc.getWidth()/2;
-	   	var halfMediumDateOffset = mediumDateOffset/2;
 		
 		if (WatchStyle < 3)
 		{
@@ -238,82 +254,97 @@ class LetsGetDigitalView extends Ui.WatchFace {
 
 			if (WatchStyle == 0)
 			{
-				// draw the step count
+				/// draw the step count
 				// draw the empty portion
 				dc.setColor(InactiveColour, Gfx.COLOR_TRANSPARENT);
-				dc.fillRectangle(halfWidth + mediumDateOffset, fontTopLR[1], halfWidth - mediumDateOffset, fillTopLR[1] - fontTopLR[1]);
+				dc.fillRectangle(halfScreenWidth + mediumDateOffset, fontTopLR[1], halfScreenWidth - mediumDateOffset, fillTopLR[1] - fontTopLR[1]);
+				
 				// draw the full portion
 				dc.setColor(ActiveColour, Gfx.COLOR_TRANSPARENT);
-				dc.fillRectangle(halfWidth + mediumDateOffset, fillTopLR[1], halfWidth - mediumDateOffset, fillHeightLR[1]);
+				dc.fillRectangle(halfScreenWidth + mediumDateOffset, fillTopLR[1], halfScreenWidth - mediumDateOffset, fillHeightLR[1]);
+
 				// draw the over-full indicators
 				dc.setColor(OverActiveColour, Gfx.COLOR_TRANSPARENT);
 				for (var index = 0; index < overStepCount; index++)
 		     	{
 		     		var vStart = fillTopLR[1] + (overstepGap + overstepWidth)*index;
-		     		dc.fillRectangle(halfWidth + mediumDateOffset, vStart, halfWidth - mediumDateOffset, overstepWidth); 
+		     		dc.fillRectangle(halfScreenWidth + mediumDateOffset, vStart, halfScreenWidth - mediumDateOffset, overstepWidth); 
 		      	}
 		        
 				// draw the date
 				dc.setColor(Gfx.COLOR_TRANSPARENT, backgroundColour);
-	        	dc.drawText(halfWidth + mediumDateOffset, dateVerticalCentre - dateFontHeight, dateFont, endPad(dateStringSplit[0],8," "), Gfx.TEXT_JUSTIFY_LEFT);
-	        	dc.drawText(halfWidth + mediumDateOffset, dateVerticalCentre                 , dateFont, endPad(dateStringSplit[1],8," "), Gfx.TEXT_JUSTIFY_LEFT);
-	        	dc.drawText(halfWidth + mediumDateOffset, dateVerticalCentre + dateFontHeight, dateFont, endPad(dateStringSplit[2],8," "), Gfx.TEXT_JUSTIFY_LEFT);
+	        	dc.drawText(halfScreenWidth + mediumDateOffset, dateVerticalCentre - dateFontHeight, dateFont, endPad(dateStringSplit[0],8," "), Gfx.TEXT_JUSTIFY_LEFT);
+	        	dc.drawText(halfScreenWidth + mediumDateOffset, dateVerticalCentre                 , dateFont, endPad(dateStringSplit[1],8," "), Gfx.TEXT_JUSTIFY_LEFT);
+	        	dc.drawText(halfScreenWidth + mediumDateOffset, dateVerticalCentre + dateFontHeight, dateFont, endPad(dateStringSplit[2],8," "), Gfx.TEXT_JUSTIFY_LEFT);
 							
 				// draw the battery percent
-				dc.setColor(DateColour, Gfx.COLOR_TRANSPARENT);
-	        	dc.drawText(halfWidth, dc.getHeight() - 1.7*smallDateFontHeight, smallDateFont, batteryLevelString, Gfx.TEXT_JUSTIFY_CENTER);
+				drawBatteryLevel(dc, batteryLevel);
+
+			    // draw the notification count
+    			drawNotificationCount(dc, notificationCount);
+
 			
 				// draw the time
 				dc.setColor(HourColour, Gfx.COLOR_TRANSPARENT);
-				dc.drawText(halfWidth, timeVerticalCentre - 0.5*timeFontHeight, timeFont, hourLabel, Gfx.TEXT_JUSTIFY_RIGHT);
 				if (clockTime.hour < 10)
 				{
-					dc.drawText(halfWidth - timeFontWidth[clockTime.hour], timeVerticalCentre - 0.5*timeFontHeight, timeCheckerFont, "0", Gfx.TEXT_JUSTIFY_RIGHT);
+					dc.drawText(halfScreenWidth - timeFontWidth[clockTime.hour], timeVerticalCentre - 0.5*timeFontHeight, timeCheckerFont, "0", Gfx.TEXT_JUSTIFY_RIGHT);
+					dc.drawText(halfScreenWidth, timeVerticalCentre - 0.5*timeFontHeight, timeFont, (clockTime.hour).toString(), Gfx.TEXT_JUSTIFY_RIGHT);
+				}
+				else
+				{
+					dc.drawText(halfScreenWidth, timeVerticalCentre - 0.5*timeFontHeight, timeFont, hourLabel, Gfx.TEXT_JUSTIFY_RIGHT);	
 				}
 				dc.setColor(MinuteColour, Gfx.COLOR_TRANSPARENT);
-				dc.drawText(halfWidth, timeVerticalCentre + 0.5*timeFontHeight, timeFont, minuteLabel, Gfx.TEXT_JUSTIFY_RIGHT);
+				dc.drawText(halfScreenWidth, timeVerticalCentre + 0.5*timeFontHeight, timeFont, minuteLabel, Gfx.TEXT_JUSTIFY_RIGHT);
 			}
 			else if (WatchStyle == 1)
 			{
 				// draw the step count
 				// draw the empty portion
 				dc.setColor(InactiveColour, Gfx.COLOR_TRANSPARENT);
-				dc.fillRectangle(0, fontTopLR[0], halfWidth, fillTopLR[0] - fontTopLR[0]);
+				dc.fillRectangle(0, fontTopLR[0], halfScreenWidth, fillTopLR[0] - fontTopLR[0]);
 				// draw the full portion
 				dc.setColor(ActiveColour, Gfx.COLOR_TRANSPARENT);
-				dc.fillRectangle(0, fillTopLR[0], halfWidth, fillHeightLR[0]);
+				dc.fillRectangle(0, fillTopLR[0], halfScreenWidth, fillHeightLR[0]);
 				// draw the over-full indicators
 				dc.setColor(OverActiveColour, Gfx.COLOR_TRANSPARENT);
 				for (var index = 0; index < overStepCount; index++)
 				{
 					var vStart = fillTopLR[1] + (overstepGap + overstepWidth)*index;
-					dc.fillRectangle(0, vStart, halfWidth, overstepWidth); 
+					dc.fillRectangle(0, vStart, halfScreenWidth, overstepWidth); 
 				}
 
 				// black out the LHS of the time
 				dc.setColor(backgroundColour, Gfx.COLOR_TRANSPARENT);
-				dc.fillRectangle(0, timeVerticalCentre - 0.5*timeFontHeight, halfWidth - hourWidth + 1, timeFontHeight+1);
-  				dc.fillRectangle(0, timeVerticalCentre + 0.5*timeFontHeight, halfWidth - minuteWidth + 1, timeFontHeight+1);
+				dc.fillRectangle(0, timeVerticalCentre - 0.5*timeFontHeight, halfScreenWidth - hourWidth + 1, timeFontHeight+1);
+  				dc.fillRectangle(0, timeVerticalCentre + 0.5*timeFontHeight, halfScreenWidth - minuteWidth + 1, timeFontHeight+1);
 		        
 				// draw the date
 				dc.setColor(DateColour, Gfx.COLOR_TRANSPARENT);
-	        	dc.drawText(halfWidth + mediumDateOffset, dateVerticalCentre - dateFontHeight, dateFont, dateStringSplit[0], Gfx.TEXT_JUSTIFY_LEFT);
-	        	dc.drawText(halfWidth + mediumDateOffset, dateVerticalCentre                 , dateFont, dateStringSplit[1], Gfx.TEXT_JUSTIFY_LEFT);
-	        	dc.drawText(halfWidth + mediumDateOffset, dateVerticalCentre + dateFontHeight, dateFont, dateStringSplit[2], Gfx.TEXT_JUSTIFY_LEFT);
+	        	dc.drawText(halfScreenWidth + mediumDateOffset, dateVerticalCentre - dateFontHeight, dateFont, dateStringSplit[0], Gfx.TEXT_JUSTIFY_LEFT);
+	        	dc.drawText(halfScreenWidth + mediumDateOffset, dateVerticalCentre                 , dateFont, dateStringSplit[1], Gfx.TEXT_JUSTIFY_LEFT);
+	        	dc.drawText(halfScreenWidth + mediumDateOffset, dateVerticalCentre + dateFontHeight, dateFont, dateStringSplit[2], Gfx.TEXT_JUSTIFY_LEFT);
 							
 				// draw the battery percent
-				dc.setColor(DateColour, Gfx.COLOR_TRANSPARENT);
-	        	dc.drawText(halfWidth, dc.getHeight() - 1.7*smallDateFontHeight, smallDateFont, batteryLevelString, Gfx.TEXT_JUSTIFY_CENTER);
+				drawBatteryLevel(dc, batteryLevel);
+
+			    // draw the notification count
+    			drawNotificationCount(dc, notificationCount);
 			
 				// draw the time
 				dc.setColor(Gfx.COLOR_TRANSPARENT, backgroundColour);
-				dc.drawText(halfWidth, timeVerticalCentre - 0.5*timeFontHeight, timeFont, hourLabel, Gfx.TEXT_JUSTIFY_RIGHT);
 				if (clockTime.hour < 10)
 				{
-					dc.drawText(halfWidth - timeFontWidth[clockTime.hour], timeVerticalCentre - 0.5*timeFontHeight, timeCheckerFont, "0", Gfx.TEXT_JUSTIFY_RIGHT);
+					dc.drawText(halfScreenWidth - timeFontWidth[clockTime.hour], timeVerticalCentre - 0.5*timeFontHeight, timeCheckerFont, "0", Gfx.TEXT_JUSTIFY_RIGHT);
+					dc.drawText(halfScreenWidth, timeVerticalCentre - 0.5*timeFontHeight, timeFont, (clockTime.hour).toString(), Gfx.TEXT_JUSTIFY_RIGHT);
+				}
+				else
+				{
+					dc.drawText(halfScreenWidth, timeVerticalCentre - 0.5*timeFontHeight, timeFont, hourLabel, Gfx.TEXT_JUSTIFY_RIGHT);	
 				}
 				dc.setColor(Gfx.COLOR_TRANSPARENT, backgroundColour);
-				dc.drawText(halfWidth, timeVerticalCentre + 0.5*timeFontHeight, timeFont, minuteLabel, Gfx.TEXT_JUSTIFY_RIGHT);
+				dc.drawText(halfScreenWidth, timeVerticalCentre + 0.5*timeFontHeight, timeFont, minuteLabel, Gfx.TEXT_JUSTIFY_RIGHT);
 			}
 			else if (WatchStyle == 2)
 			{
@@ -326,90 +357,103 @@ class LetsGetDigitalView extends Ui.WatchFace {
 		        
 		        // draw the empty portion
 		        dc.setColor(InactiveColour, Gfx.COLOR_TRANSPARENT);
-		        dc.fillRectangle(0, fontTop, halfWidth, fillTop - fontTop); // LHS - time side
-		        dc.fillRectangle(halfWidth + mediumDateOffset, fontTopLR[1], halfWidth - mediumDateOffset, fillTop - fontTopLR[1]); // RHS - date side
+		        dc.fillRectangle(0, fontTop, halfScreenWidth, fillTop - fontTop); // LHS - time side
+		        dc.fillRectangle(halfScreenWidth + mediumDateOffset, fontTopLR[1], halfScreenWidth - mediumDateOffset, fillTop - fontTopLR[1]); // RHS - date side
 		        // draw the full portion
 		        dc.setColor(ActiveColour, Gfx.COLOR_TRANSPARENT);
-		        dc.fillRectangle(0, fillTop, halfWidth, fillHeight); // LHS - time side
-		        dc.fillRectangle(halfWidth + mediumDateOffset, fillTop, halfWidth - mediumDateOffset, fillHeightLR[1]); // RHS - date side
+		        dc.fillRectangle(0, fillTop, halfScreenWidth, fillHeight); // LHS - time side
+		        dc.fillRectangle(halfScreenWidth + mediumDateOffset, fillTop, halfScreenWidth - mediumDateOffset, fillHeightLR[1]); // RHS - date side
 		        // draw the over-full indicators
 		        dc.setColor(OverActiveColour, Gfx.COLOR_TRANSPARENT);
 		        for (var index = 0; index < overStepCount; index++)
 		     	{
 		     		var vStart = fillTop + (overstepGap + overstepWidth)*index;
-		     		dc.fillRectangle(0, vStart, halfWidth, overstepWidth); // LHS - time side
+		     		dc.fillRectangle(0, vStart, halfScreenWidth, overstepWidth); // LHS - time side
 		     		if (((vStart + overstepWidth) > fontTopLR[1]) && ((vStart + overstepWidth) <= fontBottomLR[1])) 
 		     		{
 		     			vStart = max([vStart, fontTopLR[1]]);
 		     			var osWidth = min([fontBottomLR[1] - vStart, overstepWidth]); 
-		     			dc.fillRectangle(halfWidth + mediumDateOffset, vStart, halfWidth - mediumDateOffset, osWidth); // RHS - date side
+		     			dc.fillRectangle(halfScreenWidth + mediumDateOffset, vStart, halfScreenWidth - mediumDateOffset, osWidth); // RHS - date side
 	     			}
 		        }
 		        
 		        // black out the LHS of the time
 		        dc.setColor(backgroundColour, Gfx.COLOR_TRANSPARENT);
-		        dc.fillRectangle(0, timeVerticalCentre - 0.5*timeFontHeight, halfWidth - hourWidth + 1, timeFontHeight+1);
-		        dc.fillRectangle(0, timeVerticalCentre + 0.5*timeFontHeight, halfWidth - minuteWidth + 1, timeFontHeight+1);
+		        dc.fillRectangle(0, timeVerticalCentre - 0.5*timeFontHeight, halfScreenWidth - hourWidth + 1, timeFontHeight+1);
+		        dc.fillRectangle(0, timeVerticalCentre + 0.5*timeFontHeight, halfScreenWidth - minuteWidth + 1, timeFontHeight+1);
 		        // black out the RHS under the date
-		        dc.fillRectangle(halfWidth + mediumDateOffset, fontBottomLR[1], halfWidth - mediumDateOffset, fontBottomLR[0] - fontBottomLR[1]);
+		        dc.fillRectangle(halfScreenWidth + mediumDateOffset, fontBottomLR[1], halfScreenWidth - mediumDateOffset, fontBottomLR[0] - fontBottomLR[1]);
 		        
 				// draw the date
 				dc.setColor(Gfx.COLOR_TRANSPARENT, backgroundColour);
-	        	dc.drawText(halfWidth + mediumDateOffset, dateVerticalCentre - dateFontHeight, dateFont, endPad(dateStringSplit[0],8," "), Gfx.TEXT_JUSTIFY_LEFT);
-	        	dc.drawText(halfWidth + mediumDateOffset, dateVerticalCentre                 , dateFont, endPad(dateStringSplit[1],8," "), Gfx.TEXT_JUSTIFY_LEFT);
-	        	dc.drawText(halfWidth + mediumDateOffset, dateVerticalCentre + dateFontHeight, dateFont, endPad(dateStringSplit[2],8," "), Gfx.TEXT_JUSTIFY_LEFT);
+	        	dc.drawText(halfScreenWidth + mediumDateOffset, dateVerticalCentre - dateFontHeight, dateFont, endPad(dateStringSplit[0],8," "), Gfx.TEXT_JUSTIFY_LEFT);
+	        	dc.drawText(halfScreenWidth + mediumDateOffset, dateVerticalCentre                 , dateFont, endPad(dateStringSplit[1],8," "), Gfx.TEXT_JUSTIFY_LEFT);
+	        	dc.drawText(halfScreenWidth + mediumDateOffset, dateVerticalCentre + dateFontHeight, dateFont, endPad(dateStringSplit[2],8," "), Gfx.TEXT_JUSTIFY_LEFT);
 										
 				// draw the battery percent
-				dc.setColor(DateColour, Gfx.COLOR_TRANSPARENT);
-	        	dc.drawText(halfWidth, dc.getHeight() - 1.7*smallDateFontHeight, smallDateFont, batteryLevelString, Gfx.TEXT_JUSTIFY_CENTER);
+				drawBatteryLevel(dc, batteryLevel);
+
+				// draw the notification count
+    			drawNotificationCount(dc, notificationCount);
 			
 				// draw the time
 				dc.setColor(Gfx.COLOR_TRANSPARENT, backgroundColour);
-				dc.drawText(halfWidth, timeVerticalCentre - 0.5*timeFontHeight, timeFont, hourLabel, Gfx.TEXT_JUSTIFY_RIGHT);
 				if (clockTime.hour < 10)
 				{
-					dc.drawText(halfWidth - timeFontWidth[clockTime.hour], timeVerticalCentre - 0.5*timeFontHeight, timeCheckerFont, "0", Gfx.TEXT_JUSTIFY_RIGHT);
+					dc.drawText(halfScreenWidth - timeFontWidth[clockTime.hour], timeVerticalCentre - 0.5*timeFontHeight, timeCheckerFont, "0", Gfx.TEXT_JUSTIFY_RIGHT);
+					dc.drawText(halfScreenWidth, timeVerticalCentre - 0.5*timeFontHeight, timeFont, (clockTime.hour).toString(), Gfx.TEXT_JUSTIFY_RIGHT);
+				}
+				else
+				{
+					dc.drawText(halfScreenWidth, timeVerticalCentre - 0.5*timeFontHeight, timeFont, hourLabel, Gfx.TEXT_JUSTIFY_RIGHT);	
 				}
 				dc.setColor(Gfx.COLOR_TRANSPARENT, backgroundColour);
-				dc.drawText(halfWidth, timeVerticalCentre + 0.5*timeFontHeight, timeFont, minuteLabel, Gfx.TEXT_JUSTIFY_RIGHT);
+				dc.drawText(halfScreenWidth, timeVerticalCentre + 0.5*timeFontHeight, timeFont, minuteLabel, Gfx.TEXT_JUSTIFY_RIGHT);
 			}
 		}
 		else if (WatchStyle == 3)
 		{
 			// draw the step count
-	        var fillHeight = ((1-fillPercent) * dc.getHeight()).toNumber();
+	        var fillHeight = ((1-fillPercent) * screenHeight).toNumber();
 	        // draw the empty portion
 	        dc.setColor(backgroundColour, Gfx.COLOR_TRANSPARENT);
-	        dc.fillRectangle(0, 0, dc.getWidth(), fillHeight);
+	        dc.fillRectangle(0, 0, screenWidth, fillHeight);
 	        // draw the full portion
 	        dc.setColor(ActiveColour, Gfx.COLOR_TRANSPARENT);
-	        dc.fillRectangle(0, fillHeight, dc.getWidth(), dc.getHeight() - fillHeight);
+	        dc.fillRectangle(0, fillHeight, screenWidth, screenHeight - fillHeight);
 	        // draw the over-full indicators
 	        dc.setColor(OverActiveColour, Gfx.COLOR_TRANSPARENT);
 	        for (var index = 0; index < overStepCount; index++)
 	     	{
 	     		var vStart = fillHeight + (overstepGap + overstepWidth)*index;
-	     		dc.fillRectangle(0, vStart, dc.getWidth(), overstepWidth); 
+	     		dc.fillRectangle(0, vStart, screenWidth, overstepWidth); 
 	        }
 	        
 	        // draw the date
 			dc.setColor(DateColour, Gfx.COLOR_TRANSPARENT);
-        	dc.drawText(halfWidth + mediumDateOffset, dateVerticalCentre - dateFontHeight, dateFont, dateStringSplit[0], Gfx.TEXT_JUSTIFY_LEFT);
-        	dc.drawText(halfWidth + mediumDateOffset, dateVerticalCentre                 , dateFont, dateStringSplit[1], Gfx.TEXT_JUSTIFY_LEFT);
-        	dc.drawText(halfWidth + mediumDateOffset, dateVerticalCentre + dateFontHeight, dateFont, dateStringSplit[2], Gfx.TEXT_JUSTIFY_LEFT);
+        	dc.drawText(halfScreenWidth + mediumDateOffset, dateVerticalCentre - dateFontHeight, dateFont, dateStringSplit[0], Gfx.TEXT_JUSTIFY_LEFT);
+        	dc.drawText(halfScreenWidth + mediumDateOffset, dateVerticalCentre                 , dateFont, dateStringSplit[1], Gfx.TEXT_JUSTIFY_LEFT);
+        	dc.drawText(halfScreenWidth + mediumDateOffset, dateVerticalCentre + dateFontHeight, dateFont, dateStringSplit[2], Gfx.TEXT_JUSTIFY_LEFT);
 			
 			// draw the battery percent
-        	dc.drawText(halfWidth, dc.getHeight() - 1.7*smallDateFontHeight, smallDateFont, batteryLevelString, Gfx.TEXT_JUSTIFY_CENTER);
+        	drawBatteryLevel(dc, batteryLevel);
+
+		    // draw the notification count
+			drawNotificationCount(dc, notificationCount);
 		
 			// draw the time
 			dc.setColor(HourColour, Gfx.COLOR_TRANSPARENT);
-			dc.drawText(halfWidth, timeVerticalCentre - 0.5*timeFontHeight, timeFont, hourLabel, Gfx.TEXT_JUSTIFY_RIGHT);
 			if (clockTime.hour < 10)
 			{
-				dc.drawText(halfWidth - timeFontWidth[clockTime.hour], timeVerticalCentre - 0.5*timeFontHeight, timeCheckerFont, "0", Gfx.TEXT_JUSTIFY_RIGHT);
+				dc.drawText(halfScreenWidth - timeFontWidth[clockTime.hour], timeVerticalCentre - 0.5*timeFontHeight, timeCheckerFont, "0", Gfx.TEXT_JUSTIFY_RIGHT);
+				dc.drawText(halfScreenWidth, timeVerticalCentre - 0.5*timeFontHeight, timeFont, (clockTime.hour).toString(), Gfx.TEXT_JUSTIFY_RIGHT);
+			}
+			else
+			{
+				dc.drawText(halfScreenWidth, timeVerticalCentre - 0.5*timeFontHeight, timeFont, hourLabel, Gfx.TEXT_JUSTIFY_RIGHT);	
 			}
 			dc.setColor(MinuteColour, Gfx.COLOR_TRANSPARENT);
-			dc.drawText(halfWidth, timeVerticalCentre + 0.5*timeFontHeight, timeFont, minuteLabel, Gfx.TEXT_JUSTIFY_RIGHT);
+			dc.drawText(halfScreenWidth, timeVerticalCentre + 0.5*timeFontHeight, timeFont, minuteLabel, Gfx.TEXT_JUSTIFY_RIGHT);
 		}
 		else if (WatchStyle == 4)
 		{
@@ -418,29 +462,29 @@ class LetsGetDigitalView extends Ui.WatchFace {
 			
 			// draw the date
 			dc.setColor(DateColour, Gfx.COLOR_TRANSPARENT);
-        	dc.drawText(halfWidth + mediumDateOffset, dateVerticalCentre - dateFontHeight, dateFont, dateStringSplit[0], Gfx.TEXT_JUSTIFY_LEFT);
-        	dc.drawText(halfWidth + mediumDateOffset, dateVerticalCentre                 , dateFont, dateStringSplit[1], Gfx.TEXT_JUSTIFY_LEFT);
-        	dc.drawText(halfWidth + mediumDateOffset, dateVerticalCentre + dateFontHeight, dateFont, dateStringSplit[2], Gfx.TEXT_JUSTIFY_LEFT);
+        	dc.drawText(halfScreenWidth + mediumDateOffset, dateVerticalCentre - dateFontHeight, dateFont, dateStringSplit[0], Gfx.TEXT_JUSTIFY_LEFT);
+        	dc.drawText(halfScreenWidth + mediumDateOffset, dateVerticalCentre                 , dateFont, dateStringSplit[1], Gfx.TEXT_JUSTIFY_LEFT);
+        	dc.drawText(halfScreenWidth + mediumDateOffset, dateVerticalCentre + dateFontHeight, dateFont, dateStringSplit[2], Gfx.TEXT_JUSTIFY_LEFT);
 			
 			// draw the battery percent
-        	dc.drawText(halfWidth, dc.getHeight() - 1.7*smallDateFontHeight, smallDateFont, batteryLevelString, Gfx.TEXT_JUSTIFY_CENTER);
+        	drawBatteryLevel(dc, batteryLevel);
+
+		    // draw the notification count
+			drawNotificationCount(dc, notificationCount);
 			
 			// draw the time
 			dc.setColor(HourColour, Gfx.COLOR_TRANSPARENT);
-			dc.drawText(halfWidth, timeVerticalCentre - 0.5*timeFontHeight, timeFont, hourLabel, Gfx.TEXT_JUSTIFY_RIGHT);
 			if (clockTime.hour < 10)
 			{
-				if (TimeCheckerplateStyle > 0)
-				{
-					dc.drawText(halfWidth - timeFontWidth[clockTime.hour], timeVerticalCentre - 0.5*timeFontHeight, timeCheckerFont, "0", Gfx.TEXT_JUSTIFY_RIGHT);
-				}
-				else
-				{
-					dc.drawText(halfWidth - timeFontWidth[clockTime.hour], timeVerticalCentre - 0.5*timeFontHeight, timeFont, "0", Gfx.TEXT_JUSTIFY_RIGHT);
-				}
+				dc.drawText(halfScreenWidth - timeFontWidth[clockTime.hour], timeVerticalCentre - 0.5*timeFontHeight, timeCheckerFont, "0", Gfx.TEXT_JUSTIFY_RIGHT);
+				dc.drawText(halfScreenWidth, timeVerticalCentre - 0.5*timeFontHeight, timeFont, (clockTime.hour).toString(), Gfx.TEXT_JUSTIFY_RIGHT);
+			}
+			else
+			{
+				dc.drawText(halfScreenWidth, timeVerticalCentre - 0.5*timeFontHeight, timeFont, hourLabel, Gfx.TEXT_JUSTIFY_RIGHT);	
 			}
 			dc.setColor(MinuteColour, Gfx.COLOR_TRANSPARENT);
-			dc.drawText(halfWidth, timeVerticalCentre + 0.5*timeFontHeight, timeFont, minuteLabel, Gfx.TEXT_JUSTIFY_RIGHT);
+			dc.drawText(halfScreenWidth, timeVerticalCentre + 0.5*timeFontHeight, timeFont, minuteLabel, Gfx.TEXT_JUSTIFY_RIGHT);
 		}
 		else if (WatchStyle == 5)
 		{
@@ -449,41 +493,40 @@ class LetsGetDigitalView extends Ui.WatchFace {
 
 			// draw the date
 			dc.setColor(DateColour, Gfx.COLOR_TRANSPARENT);
-        	//dc.drawText(halfWidth, smallDateFontHeight, smallDateFont, dateString, Gfx.TEXT_JUSTIFY_CENTER);
         	var dateXOffsets = getSmallDateOffsets(dateString);
-			var dateYOffsets = getY_onArc(dateXOffsets, dc.getHeight()/2 - (stepArcWidth + 1));
-			drawTextArray(dc, dateString, halfWidth, stepArcWidth + 1, dateXOffsets, dateYOffsets);
+			var dateYOffsets = getY_onArc(dateXOffsets, halfScreenHeight - (stepArcWidth + 1));
+			drawTextArray(dc, dateString, halfScreenWidth, stepArcWidth + 1, dateXOffsets, dateYOffsets);
 
-			// draw the battery percent
+			// draw the battery percent and notification count in line
+			var batteryLevelString = batteryLevel.format("%d") + "%";
+			if (notificationCount > 0)
+			{
+				batteryLevelString = notificationCount.format("%d") + "#  " + batteryLevelString; 
+			}
         	var batteryXOffsets = getSmallDateOffsets(batteryLevelString);
-			var batteryYOffsets = getY_onArc(batteryXOffsets, dc.getHeight()/2 - stepArcWidth);
+			var batteryYOffsets = getY_onArc(batteryXOffsets, halfScreenHeight - stepArcWidth);
 			batteryYOffsets = multiplyByScalar(batteryYOffsets,-1);
-			drawTextArray(dc, batteryLevelString, halfWidth, dc.getHeight() - (stepArcWidth + 1 + smallDateFontHeight), batteryXOffsets, batteryYOffsets);
-        	//dc.drawText(halfWidth, dc.getHeight() - 1.7*smallDateFontHeight, smallDateFont, batteryLevelString, Gfx.TEXT_JUSTIFY_CENTER);
+			drawTextArray(dc, batteryLevelString, halfScreenWidth, screenHeight - (stepArcWidth + 1 + 1.2*smallDateFontHeight), batteryXOffsets, batteryYOffsets);
 
 			// draw the time
 			var hourTens = clockTime.hour / 10;
 			var hourUnits = clockTime.hour % 10;
-			var minTens = clockTime.min / 10;
-			var minUnits = clockTime.min % 10;
 			
 			var hourXOffset = (timeFontWidth[hourTens] - timeFontWidth[hourUnits])/2;
-			var minuteXOffset = (timeFontWidth[minTens] - timeFontWidth[minUnits])/2;
 			
 			dc.setColor(HourColour, Gfx.COLOR_TRANSPARENT);
-			dc.drawText(halfWidth + halfMediumDateOffset + hourXOffset, timeVerticalCentre - 0.5*timeFontHeight, timeFont, hourUnits.toString(), Gfx.TEXT_JUSTIFY_LEFT);
 			if (clockTime.hour < 10)
 			{
-				dc.drawText(halfWidth - halfMediumDateOffset + hourXOffset, timeVerticalCentre - 0.5*timeFontHeight, timeCheckerFont, "0", Gfx.TEXT_JUSTIFY_RIGHT);
+				dc.drawText(halfScreenWidth - hourXOffset, timeVerticalCentre - 0.5*timeFontHeight, timeCheckerFont, "0", Gfx.TEXT_JUSTIFY_RIGHT);
+				dc.drawText(halfScreenWidth + hourXOffset, timeVerticalCentre - 0.5*timeFontHeight, timeFont, (clockTime.hour).toString(), Gfx.TEXT_JUSTIFY_LEFT);
 			}
 			else
 			{
-				dc.drawText(halfWidth - halfMediumDateOffset + hourXOffset, timeVerticalCentre - 0.5*timeFontHeight, timeFont, hourTens.toString(), Gfx.TEXT_JUSTIFY_RIGHT);
+				dc.drawText(halfScreenWidth, timeVerticalCentre - 0.5*timeFontHeight, timeFont, hourLabel, Gfx.TEXT_JUSTIFY_CENTER);	
 			}
 
 			dc.setColor(MinuteColour, Gfx.COLOR_TRANSPARENT);
-			dc.drawText(halfWidth + halfMediumDateOffset + minuteXOffset, timeVerticalCentre + 0.5*timeFontHeight, timeFont, minUnits.toString(), Gfx.TEXT_JUSTIFY_LEFT);
-			dc.drawText(halfWidth - halfMediumDateOffset + minuteXOffset, timeVerticalCentre + 0.5*timeFontHeight, timeFont, minTens.toString(), Gfx.TEXT_JUSTIFY_RIGHT);
+			dc.drawText(halfScreenWidth, timeVerticalCentre + 0.5*timeFontHeight, timeFont, minuteLabel, Gfx.TEXT_JUSTIFY_CENTER);
 		}
 		else
 		{
@@ -492,33 +535,33 @@ class LetsGetDigitalView extends Ui.WatchFace {
 			
 			// draw the date
 			dc.setColor(DateColour, Gfx.COLOR_TRANSPARENT);
-        	dc.drawText(halfWidth, smallDateVerticalCentre, smallDateFont, dateString, Gfx.TEXT_JUSTIFY_CENTER);
+        	dc.drawText(halfScreenWidth, smallDateVerticalCentre, smallDateFont, dateString, Gfx.TEXT_JUSTIFY_CENTER);
 			
 			// draw the battery percent
-        	dc.drawText(halfWidth, dc.getHeight() - 1.7*smallDateFontHeight, smallDateFont, batteryLevelString, Gfx.TEXT_JUSTIFY_CENTER);
+        	drawBatteryLevel(dc, batteryLevel);
+
+		    // draw the notification count
+			drawNotificationCount(dc, notificationCount);
 			
 			// draw the time
 			var hourTens = clockTime.hour / 10;
 			var hourUnits = clockTime.hour % 10;
-			var minTens = clockTime.min / 10;
-			var minUnits = clockTime.min % 10;
 			
 			var hourXOffset = (timeFontWidth[hourTens] - timeFontWidth[hourUnits])/2;
-			var minuteXOffset = (timeFontWidth[minTens] - timeFontWidth[minUnits])/2;
 			
 			dc.setColor(HourColour, Gfx.COLOR_TRANSPARENT);
-			dc.drawText(halfWidth + halfMediumDateOffset + hourXOffset, timeVerticalCentre - 0.5*(smallDateFontHeight + timeFontHeight), timeFont, hourUnits.toString(), Gfx.TEXT_JUSTIFY_LEFT);
 			if (clockTime.hour < 10)
 			{
-				dc.drawText(halfWidth - halfMediumDateOffset + hourXOffset, timeVerticalCentre - 0.5*(smallDateFontHeight + timeFontHeight), timeCheckerFont, "0", Gfx.TEXT_JUSTIFY_RIGHT);
+				dc.drawText(halfScreenWidth - hourXOffset, timeVerticalCentre  - 0.5*(smallDateFontHeight + timeFontHeight), timeCheckerFont, "0", Gfx.TEXT_JUSTIFY_RIGHT);
+				dc.drawText(halfScreenWidth + hourXOffset, timeVerticalCentre  - 0.5*(smallDateFontHeight + timeFontHeight), timeFont, (clockTime.hour).toString(), Gfx.TEXT_JUSTIFY_LEFT);
 			}
 			else
 			{
-				dc.drawText(halfWidth - halfMediumDateOffset + hourXOffset, timeVerticalCentre - 0.5*(smallDateFontHeight + timeFontHeight), timeFont, hourTens.toString(), Gfx.TEXT_JUSTIFY_RIGHT);
+				dc.drawText(halfScreenWidth, timeVerticalCentre - 0.5*(smallDateFontHeight + timeFontHeight), timeFont, hourLabel, Gfx.TEXT_JUSTIFY_CENTER);	
 			}
+
 			dc.setColor(MinuteColour, Gfx.COLOR_TRANSPARENT);
-			dc.drawText(halfWidth + halfMediumDateOffset + minuteXOffset, timeVerticalCentre + 0.5*(smallDateFontHeight + timeFontHeight), timeFont, minUnits.toString(), Gfx.TEXT_JUSTIFY_LEFT);
-			dc.drawText(halfWidth - halfMediumDateOffset + minuteXOffset, timeVerticalCentre + 0.5*(smallDateFontHeight + timeFontHeight), timeFont, minTens.toString(), Gfx.TEXT_JUSTIFY_RIGHT);
+			dc.drawText(halfScreenWidth, timeVerticalCentre + 0.5*(smallDateFontHeight + timeFontHeight), timeFont, minuteLabel, Gfx.TEXT_JUSTIFY_CENTER);
 		}
 		
 		if (fourtwenty)
@@ -533,7 +576,7 @@ class LetsGetDigitalView extends Ui.WatchFace {
 		System.println(" ms");
 		*/
 	}
-		
+			
 	function toDateString(dotw, day, month, UseUpperCase)
 	{
 		var dateString = Lang.format("$1$ $2$ $3$", [dotw, day, month]);
@@ -548,17 +591,17 @@ class LetsGetDigitalView extends Ui.WatchFace {
         {
         	if ((degreeStart > 90) == false)
         	{
-         		dc.drawArc(dc.getWidth()/2, dc.getHeight()/2, dc.getWidth()/2 - stepArcWidth, Gfx.ARC_CLOCKWISE, 90 - degreeStart, 0);
-         		dc.drawArc(dc.getWidth()/2, dc.getHeight()/2, dc.getWidth()/2 - stepArcWidth, Gfx.ARC_CLOCKWISE, 0, 360 - (degreeEnd - 90));
+         		dc.drawArc(halfScreenWidth, halfScreenHeight, halfScreenWidth - stepArcWidth, Gfx.ARC_CLOCKWISE, 90 - degreeStart, 0);
+         		dc.drawArc(halfScreenWidth, halfScreenHeight, halfScreenWidth - stepArcWidth, Gfx.ARC_CLOCKWISE, 0, 360 - (degreeEnd - 90));
          	}
          	else
          	{
-         		dc.drawArc(dc.getWidth()/2, dc.getHeight()/2, dc.getWidth()/2 - stepArcWidth, Gfx.ARC_CLOCKWISE, 360 - (degreeStart - 90), 360 - (degreeEnd - 90));
+         		dc.drawArc(halfScreenWidth, halfScreenHeight, halfScreenWidth - stepArcWidth, Gfx.ARC_CLOCKWISE, 360 - (degreeStart - 90), 360 - (degreeEnd - 90));
          	}
 		}
         else
         {
-        	dc.drawArc(dc.getWidth()/2, dc.getHeight()/2, dc.getWidth()/2 - stepArcWidth, Gfx.ARC_CLOCKWISE, 90 - degreeStart, 90 - degreeEnd);         	
+        	dc.drawArc(halfScreenWidth, halfScreenHeight, halfScreenWidth - stepArcWidth, Gfx.ARC_CLOCKWISE, 90 - degreeStart, 90 - degreeEnd);         	
         }
 	}
 	
@@ -609,6 +652,28 @@ class LetsGetDigitalView extends Ui.WatchFace {
 	         }
         }
     }
+    
+    // draw the notification count
+    function drawNotificationCount(dc, notificationCount)
+    {
+		drawNotificationCountAtHeight(dc, notificationCount, 6);
+    }
+    
+    function drawNotificationCountAtHeight(dc, notificationCount, height)
+    {
+		if (notificationCount > 0)
+		{
+			dc.setColor(DateColour, Gfx.COLOR_TRANSPARENT);
+			dc.drawText(halfScreenWidth - 1, height, smallDateFont, notificationCount.format("%d")+"#", Gfx.TEXT_JUSTIFY_CENTER);
+		}
+    }
+    
+    function drawBatteryLevel(dc, batteryLevel)
+    {
+    	var batteryLevelString = batteryLevel.format("%d") + "%";
+		dc.setColor(DateColour, Gfx.COLOR_TRANSPARENT);
+    	dc.drawText(halfScreenWidth, screenHeight - 1.6*smallDateFontHeight, smallDateFont, batteryLevelString, Gfx.TEXT_JUSTIFY_CENTER);
+	}			
     
     function drawTextArray(dc, in_string, x_0, y_0, x_offsets, y_offsets)
     {

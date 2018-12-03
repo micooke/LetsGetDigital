@@ -1,0 +1,13 @@
+info face="dripicons-v2" size=-16 bold=0 italic=0 charset="" unicode=1 stretchH=100 smooth=1 aa=1 padding=0,0,0,0 spacing=1,1 outline=0
+common lineHeight=16 base=16 scaleW=256 scaleH=256 pages=1 packed=0 alphaChnl=1 redChnl=0 greenChnl=0 blueChnl=0
+page id=0 file="dripicons_0.png"
+chars count=9
+char id=97   x=0     y=0     width=16    height=16    xoffset=0     yoffset=0     xadvance=16    page=0  chnl=15
+char id=116  x=79    y=0     width=16    height=10    xoffset=0     yoffset=3     xadvance=16    page=0  chnl=15
+char id=117  x=96    y=0     width=16    height=10    xoffset=0     yoffset=3     xadvance=16    page=0  chnl=15
+char id=118  x=113   y=0     width=16    height=10    xoffset=0     yoffset=3     xadvance=16    page=0  chnl=15
+char id=119  x=130   y=0     width=16    height=10    xoffset=0     yoffset=3     xadvance=16    page=0  chnl=15
+char id=122  x=34    y=0     width=10    height=16    xoffset=3     yoffset=0     xadvance=16    page=0  chnl=15
+char id=57348 x=62    y=0     width=16    height=14    xoffset=0     yoffset=1     xadvance=16    page=0  chnl=15
+char id=57377 x=45    y=0     width=16    height=15    xoffset=0     yoffset=1     xadvance=16    page=0  chnl=15
+char id=57428 x=17    y=0     width=16    height=16    xoffset=0     yoffset=0     xadvance=16    page=0  chnl=15

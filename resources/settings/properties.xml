@@ -1,4 +1,5 @@
 <properties>
+	<property id="ShowSteps" type="boolean">true</property>
 	<property id="BackgroundColour" type="number">0x000000</property>
     <property id="HourColour" type="number">0x00AAFF</property>
     <property id="MinuteColour" type="number">0xFFFFFF</property>

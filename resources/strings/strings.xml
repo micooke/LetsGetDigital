@@ -1,6 +1,8 @@
 <strings>
     <string id="AppName">Lets Get Digital</string>
 
+	<string id="ShowStepsTitle">Show Step Count Ring</string>
+	
 	<string id="BackgroundColourTitle">Background Colour</string>
     <string id="HourColourTitle">Hour Colour</string>
     <string id="MinuteColourTitle">Minute Colour</string>

@@ -1,4 +1,8 @@
 <settings>
+    <setting propertyKey="@Properties.ShowSteps" title="@Strings.ShowStepsTitle">
+        <settingConfig type="boolean" />
+    </setting>
+    
 	<setting propertyKey="@Properties.BackgroundColour" title="@Strings.BackgroundColourTitle">
         <settingConfig type="list">
             <listEntry value="0xFFFFFF">@Strings.White</listEntry>

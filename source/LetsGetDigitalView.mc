@@ -20,7 +20,9 @@ class LetsGetDigitalView extends Ui.WatchFace {
 	hidden const engDay = ["","sun","mon","tue","wed","thu","fri","sat"];
 	hidden const engMonth = ["","jan","feb","mar","apr","may","jun","jul","aug","sep","oct","nov","dec"];
 	hidden const overstepGap = 2, overstepWidth = 3, mediumDateOffset = 5, halfMediumDateOffset = 3, stepArcWidth = 4;
-			
+
+	hidden const _DEBUG = false;
+
 	hidden const dateFontHeight = 33*1.25;
 	hidden const timeFontHeight = 59*1.05;
 	//                           [ 0, 1, 2, 3, 4, 5, 6, 7, 8, 9]
@@ -34,6 +36,8 @@ class LetsGetDigitalView extends Ui.WatchFace {
 	
 	// settings
 	hidden var is24Hour, fourtwenty = false;
+	hidden var isRoundface = 0;
+	hidden var showSteps;
 	hidden var backgroundColour, HourColour, MinuteColour, DateColour, InactiveColour;
 	hidden var ActiveColour, OverActiveColour, WatchStyle;
 	hidden var TimeCheckerplateStyle = -1, DateCheckerplateStyle = -1;
@@ -118,16 +122,21 @@ class LetsGetDigitalView extends Ui.WatchFace {
 	{
 		screenWidth = dc.getWidth();
    		halfScreenWidth = screenWidth/2;
-   		screenHeight = dc.getWidth();
+   		screenHeight = dc.getHeight();
    		halfScreenHeight = screenHeight/2;
    		
    		timeVerticalCentre = halfScreenHeight - 0.5*timeFontHeight;
 		dateVerticalCentre = halfScreenHeight - 0.4*dateFontHeight;
   		smallDateVerticalCentre = halfScreenHeight - 0.5*smallDateFontHeight;
+  		
+  		isRoundface = (screenWidth == screenHeight);
+  		
+  		if (_DEBUG) { System.print("H x W = "); System.print(screenWidth); System.print(" x "); System.println(screenHeight); }
 	}
 	
 	function updateSettings() {
 		// settings menu
+		showSteps = Application.getApp().getProperty("ShowSteps");
     	backgroundColour = Application.getApp().getProperty("BackgroundColour");
 		HourColour = Application.getApp().getProperty("HourColour");
 		MinuteColour = Application.getApp().getProperty("MinuteColour");
@@ -155,18 +164,17 @@ class LetsGetDigitalView extends Ui.WatchFace {
 		// watch settings
 		var deviceSettings = System.getDeviceSettings();
 		var notificationCount = deviceSettings.notificationCount;
-		//notificationCount = 10; // DEBUG
+		if (_DEBUG)
+		{
+			notificationCount = 10;
+			is24Hour = true;
+		}
 		
-		//is24Hour = true; // DEBUG
 		// watch statistics
     	var batteryLevel = Sys.getSystemStats().battery;
 		
 		// get local time
 		var clockTime = Sys.getClockTime();
-		//clockTime.hour = inc; inc++; // DEBUG
-		//clockTime.min = clockTime.hour;// DEBUG
-		// the hour is returned in 24-hr format
-		//localHour = localHour.format("%02d");
 
 		// Four Twenty ...
         if ( (clockTime.hour == 16) && (clockTime.min == 20) )
@@ -189,7 +197,11 @@ class LetsGetDigitalView extends Ui.WatchFace {
         {
             clockTime.hour -= 12;
         }
-		//clockTime.hour = 6; // DEBUG
+        
+        if (_DEBUG)
+		{
+			clockTime.hour = 6;
+		}
 		
 		// Call the parent onUpdate function to redraw the layout
 		//View.onUpdate(dc);
@@ -206,9 +218,17 @@ class LetsGetDigitalView extends Ui.WatchFace {
 		var day = clockDate.day;
 		var month = engMonth[clockDate.month];
 		
-		//clockDate.day_of_week = "Sun"; clockDate.day = 2; clockDate.month = "Sep"; // DEBUG
+		if (_DEBUG)
+		{
+			clockDate.day_of_week = "Sun"; clockDate.day = 2; clockDate.month = "Sep";
+		}
+		
 		var dateString = toDateString(day_of_week, day, month, true);
-		//dateString = toDateString("Sun", 2, clockDate.month, true); // DEBUG
+		
+		if (_DEBUG)
+		{
+			dateString = toDateString("Sun", 2, clockDate.month, true);
+		}
 
 		var dateStringSplit = [ day_of_week.toUpper(),
 								day.toString() + ordinalIndicator[day % 10],
@@ -224,7 +244,10 @@ class LetsGetDigitalView extends Ui.WatchFace {
 		var stepCount = ActInfo.steps;
 		var stepGoal = ActInfo.stepGoal;
 		var stepPercent = (stepCount == 0.0)?0.0:(stepCount.toFloat() / stepGoal);
-		//stepPercent = 2.65; // DEBUG
+		if (_DEBUG)
+		{
+			stepPercent = 2.65;
+		}
         		
                 
         // setup the time
@@ -628,7 +651,7 @@ class LetsGetDigitalView extends Ui.WatchFace {
     
     function drawStepCount(dc, stepPercent, arcWidth, HourColour, MinuteColour)
     {
-    	if (stepPercent > 0.0)
+    	if ((stepPercent > 0.0) and (showSteps))
 		 {
 	         dc.setColor(HourColour, Gfx.COLOR_TRANSPARENT);
 	         dc.setPenWidth(arcWidth);
@@ -656,7 +679,14 @@ class LetsGetDigitalView extends Ui.WatchFace {
     // draw the notification count
     function drawNotificationCount(dc, notificationCount)
     {
-		drawNotificationCountAtHeight(dc, notificationCount, 6);
+	    if (isRoundface)
+        {
+			drawNotificationCountAtHeight(dc, notificationCount, 6);
+        }
+        else
+        {
+			drawNotificationCountAtHeight(dc, notificationCount, -2);
+		}
     }
     
     function drawNotificationCountAtHeight(dc, notificationCount, height)
@@ -672,8 +702,16 @@ class LetsGetDigitalView extends Ui.WatchFace {
     {
     	var batteryLevelString = batteryLevel.format("%d") + "%";
 		dc.setColor(DateColour, Gfx.COLOR_TRANSPARENT);
-    	dc.drawText(halfScreenWidth, screenHeight - 1.6*smallDateFontHeight, smallDateFont, batteryLevelString, Gfx.TEXT_JUSTIFY_CENTER);
-	}			
+
+    	if (isRoundface)
+        {
+			dc.drawText(halfScreenWidth, screenHeight - 1.6*smallDateFontHeight, smallDateFont, batteryLevelString, Gfx.TEXT_JUSTIFY_CENTER);
+		}
+		else
+		{
+			dc.drawText(halfScreenWidth, screenHeight - 1.1*smallDateFontHeight, smallDateFont, batteryLevelString, Gfx.TEXT_JUSTIFY_CENTER);
+		}
+	}
     
     function drawTextArray(dc, in_string, x_0, y_0, x_offsets, y_offsets)
     {
